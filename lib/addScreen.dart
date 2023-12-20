@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class addScreen extends StatefulWidget {
   addScreen({super.key});
   @override
   State<addScreen> createState() => _addScreenState();
 }
-
+String _formatDateTime(DateTime dateTime) {
+  return DateFormat.yMMMMEEEEd().format(dateTime);
+}
 class _addScreenState extends State<addScreen> {
   CollectionReference tasks = FirebaseFirestore.instance.collection('tasks');
-  DateTime selectedDate=DateTime.now();
+  String selectedDate=_formatDateTime(DateTime.now());
   TimeOfDay selectedTime=TimeOfDay.now();
   String Name=" ";
   TextEditingController name=TextEditingController();
@@ -22,7 +25,7 @@ class _addScreenState extends State<addScreen> {
         lastDate: DateTime(2101));
     if (picked != null && picked != DateTime.now()) {
       setState(() {
-        selectedDate = picked;
+        selectedDate = _formatDateTime(picked);
       });
     }
   }
@@ -45,9 +48,10 @@ class _addScreenState extends State<addScreen> {
         .add({
        'user':FirebaseAuth.instance.currentUser!.uid,
       'name': name.text, // John Doe
-      'DueDay': selectedDate.toString(), // Stokes and Sons
+      'DueDay': selectedDate, // Stokes and Sons
       'DueTime': selectedTime.toString(), // 42
       'Done':false,
+       'noted':false
       });
      }
      catch(e)

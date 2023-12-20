@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../addScreen.dart';
 import '../edit screen.dart';
 
@@ -39,6 +43,7 @@ class _HomepageState extends State<Homepage> {
   void initState()
   {
     getData();
+    Timer.periodic(Duration(seconds: 1), (Timer t) => _getTime());
     super.initState();
   }
   Widget build(BuildContext context) {
@@ -142,6 +147,8 @@ class _HomepageState extends State<Homepage> {
                       btnOkOnPress: () async
                       {
                         await FirebaseFirestore.instance.collection("tasks").doc(Data[index].id).delete();
+                        print(DateTime.now().day);
+                        AwesomeNotifications().createNotification(content: NotificationContent(id: 1, title: "Task time overdue",channelKey:"basic_channel",body: "Task Deleted"));
                         Navigator.of(context).pop();
                         Navigator.of(context).pushNamed("/homepage");
                       },
@@ -155,6 +162,39 @@ class _HomepageState extends State<Homepage> {
           );
         }, )
     );
+  }
+
+  _getTime() async
+  {
+    String _formatDateTime(DateTime dateTime) {
+      return DateFormat.yMMMMEEEEd().format(dateTime);
+    }
+    final String now = _formatDateTime(DateTime.now());
+    final TimeOfDay time = TimeOfDay.now();
+    for (int i=0;i<Data.length;i++){
+
+      if(now==Data[i]["DueDay"] && time.toString() == Data[i]["DueTime"] && !Data[i]["noted"])
+      {
+        if(Data[i]["Done"]==false)
+        {
+          AwesomeNotifications().createNotification(content: NotificationContent(id: 1, title: "Task time overdue",channelKey:"basic_channel",body: "Task ${Data[i]["name"]} time has passed"));
+        }
+        else
+        {
+          AwesomeNotifications().createNotification(content: NotificationContent(id: 1, title: "Task time Finished",channelKey:"basic_channel",body: "Task ${Data[i]["name"]} time was Done before it was finished"));
+        }
+        CollectionReference tasks = FirebaseFirestore.instance.collection("tasks");
+        await tasks.doc(Data[i].id).update
+          (
+            {
+              "noted":true,
+
+            }
+        );
+        Navigator.of(context).pop();
+        Navigator.of(context).pushNamed("/homepage");
+      }
+    }
   }
 }
 class Task extends StatefulWidget {
@@ -172,14 +212,17 @@ class _TaskState extends State<Task> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          Column(
-
-            children:
-            [
-              Text(widget.Data["name"]),
-              Text(widget.Data["DueDay"].toString()),
-              Text(widget.Data["DueTime"].toString()),
-            ],),
+          Container(
+            padding: EdgeInsets.all(2),
+            child: Column(
+            
+              children:
+              [
+                Text(widget.Data["name"]),
+                Text(widget.Data["DueDay"].toString()),
+                Text(widget.Data["DueTime"].toString()),
+              ],),
+          ),
 
         ],
       ),

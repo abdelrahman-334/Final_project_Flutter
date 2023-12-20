@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class editScreen extends StatefulWidget {
   editScreen({super.key, required this.docid});
@@ -7,21 +8,24 @@ class editScreen extends StatefulWidget {
   @override
   State<editScreen> createState() => _editScreenState();
 }
-
+String _formatDateTime(DateTime dateTime) {
+  return DateFormat.yMMMMEEEEd().format(dateTime);
+}
 class _editScreenState extends State<editScreen> {
+
   CollectionReference tasks = FirebaseFirestore.instance.collection("tasks");
-  DateTime selectedDate=DateTime.now();
+  String selectedDate=_formatDateTime(DateTime.now());
   TimeOfDay selectedTime = TimeOfDay.now();
   TextEditingController name=TextEditingController();
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
         context: context,
-        initialDate: selectedDate,
+        initialDate: DateTime.now(),
         firstDate: DateTime(1999, 8),
         lastDate: DateTime(2101));
     if (picked != null && picked != selectedDate) {
       setState(() {
-        selectedDate = picked;
+        selectedDate = _formatDateTime(picked);
       });
     }
   }
@@ -61,13 +65,13 @@ class _editScreenState extends State<editScreen> {
               (
                 {
                   "name":name.text,
-                  "DueDay":selectedDate.toString(),
+                  "DueDay":selectedDate,
                   "DueTime":selectedTime.toString(),
                 }
 
             );
-             Navigator.of(context).pop();
-             Navigator.of(context).pushNamed("/homepage");
+             Navigator.of(context).popUntil((route) => false);
+             Navigator.of(context).pushReplacementNamed("/homepage");
             // Navigator.pop(context,[name.text,widget.selectedDate,widget.selectedTime]);
           }, child: Text("Accept changes?")))
         ],
